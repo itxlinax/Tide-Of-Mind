@@ -60,7 +60,7 @@ let ws;
         }
         
         let lastClickTime = 0;
-        const COOLDOWN_DURATION = 10000; // 10 seconds in milliseconds
+        const COOLDOWN_DURATION = 15000; // 10 seconds in milliseconds
         
         function sendFeeling(feeling, emoji, displayName) {
             const currentTime = Date.now();
