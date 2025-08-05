@@ -1,0 +1,311 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feelings WebSocket Controller</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: url("asset/PlainBG.jpg") center/cover no-repeat;
+            color: #60435F;
+            min-height: 100vh;
+            padding: 4vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin: 2vh 0;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: #1f2937;
+            margin-bottom: 1vh;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: clamp(0.875rem, 3vw, 1.125rem);
+        }
+
+        .connection-status {
+            text-align: center;
+            margin: 2vh 0;
+            padding: clamp(8px, 2vw, 16px);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: clamp(0.875rem, 3vw, 1rem);
+            flex-shrink: 0;
+        }
+
+        .connection-status.connected {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .connection-status.connecting {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .connection-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .feelings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: clamp(12px, 3vw, 24px);
+            margin: 3vh 0;
+            flex-grow: 1;
+            align-content: center;
+        }
+
+        .feeling-button {
+            width: 100%;
+            padding: clamp(16px, 4vw, 24px);
+            border: 2px solid;
+            border-radius: clamp(12px, 3vw, 20px);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: clamp(1rem, 3vw, 1.25rem);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(8px, 2vw, 16px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            min-height: clamp(60px, 12vw, 80px);
+        }
+
+        .feeling-button:hover {
+            transform: scale(1.02);
+        }
+
+        .feeling-button:active {
+            transform: scale(0.98);
+        }
+
+        .feeling-button.surprise {
+            background-color: #fef3c7;
+            border-color: #fcd34d;
+            color: #92400e;
+        }
+
+        .feeling-button.sad {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+
+        .feeling-button.happy {
+            background-color: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+
+        .feeling-button.fearful {
+            background-color: #e9d5ff;
+            border-color: #c084fc;
+            color: #7c3aed;
+        }
+
+        .feeling-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .emoji {
+            font-size: 2rem;
+        }
+
+        .reconnect-button {
+            width: 100%;
+            padding: 12px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .reconnect-button:hover {
+            background: #5b21b6;
+        }
+
+        .server-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .aquarium-info {
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #1e40af;
+        }
+
+        .p5-canvas {
+            display: none !important;
+        }
+
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            .feelings-grid {
+                grid-template-columns: 1fr;
+                gap: clamp(16px, 4vw, 20px);
+            }
+
+            .feeling-button {
+                min-height: clamp(70px, 15vw, 90px);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .feelings-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 800px;
+            }
+
+            .feelings-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+        }
+
+        /* Landscape phone optimization */
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                padding: 2vw;
+            }
+
+            .header {
+                margin: 1vh 0;
+            }
+
+            .header h1 {
+                font-size: clamp(1.25rem, 4vw, 1.75rem);
+            }
+
+            .feelings-grid {
+                grid-template-columns: repeat(2, 1fr);
+                margin: 2vh 0;
+            }
+
+            .feeling-button {
+                min-height: clamp(50px, 10vw, 70px);
+                padding: clamp(12px, 3vw, 16px);
+            }
+
+            .emoji {
+                font-size: clamp(1.25rem, 4vw, 2rem);
+            }
+        }
+
+        /* Ultra-wide screens */
+        @media (min-width: 1400px) {
+            .feelings-grid {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: 1000px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>How are you feeling?</h1>
+            <p>Share your emotions with the server</p>
+        </div>
+
+        <div class="connection-status" id="connectionStatus">
+            <span id="statusText">Connecting...</span>
+        </div>
+
+        <div class="feelings-grid">
+            <button class="feeling-button surprise" id="surpriseBtn" onclick="sendFeeling('1', '😲', '1')">
+                <span class="emoji">😲</span>
+                <span>Feeling Surprise</span>
+            </button>
+
+            <button class="feeling-button sad" id="sadBtn" onclick="sendFeeling('2', '😢', '2')">
+                <span class="emoji">😢</span>
+                <span>Feeling Sad</span>
+            </button>
+
+            <button class="feeling-button happy" id="happyBtn" onclick="sendFeeling('3', '😊', '3')">
+                <span class="emoji">😊</span>
+                <span>Feeling Happy</span>
+            </button>
+
+            <button class="feeling-button fearful" id="fearfulBtn" onclick="sendFeeling('4', '😰', '4')">
+                <span class="emoji">😰</span>
+                <span>Feeling Fearful</span>
+            </button>
+        </div>
+
+        <div id="reconnectContainer" style="display: none;">
+            <button class="reconnect-button" onclick="connectWebSocket()">
+                Reconnect to Server
+            </button>
+        </div>
+
+        <div class="aquarium-info" id="aquariumInfo" style="display: none;">
+            <strong>🐠 Check the aquarium to see your emotions in action! 🐠</strong>
+        </div>
+
+        <div class="server-info">
+            <p>Made by Breatz</p>
+        </div>
+    </div>
+
+    <script src="tideofmind.js"></script>
+</body>
+
+</html>
