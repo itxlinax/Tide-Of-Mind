@@ -59,8 +59,19 @@ let ws;
             }
         }
         
+        let lastClickTime = 0;
+        const COOLDOWN_DURATION = 10000; // 10 seconds in milliseconds
+        
         function sendFeeling(feeling, emoji, displayName) {
+            const currentTime = Date.now();
+            if (currentTime - lastClickTime < COOLDOWN_DURATION) {
+                const remainingTime = Math.ceil((COOLDOWN_DURATION - (currentTime - lastClickTime)) / 1000);
+                alert(`Please wait ${remainingTime} seconds before sending another feeling.`);
+                return;
+            }
+
             if (ws && ws.readyState === WebSocket.OPEN) {
+                lastClickTime = currentTime;
                 const message = {
                     type: "feeling",
                     message: feeling,
