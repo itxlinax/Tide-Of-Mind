@@ -59,53 +59,44 @@ let ws;
             }
         }
         
-        let lastClickTime = 0;
-        const COOLDOWN_DURATION = 15000; // 10 seconds in milliseconds
         
         function sendFeeling(feeling, emoji, displayName) {
-            const currentTime = Date.now();
-            if (currentTime - lastClickTime < COOLDOWN_DURATION) {
-                const remainingTime = Math.ceil((COOLDOWN_DURATION - (currentTime - lastClickTime)) / 1000);
-                alert(`Please wait ${remainingTime} seconds before sending another feeling.`);
-                return;
-            }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = {
+            type: "feeling",
+            message: feeling,
+            timestamp: new Date().toISOString()
+        };
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                lastClickTime = currentTime;
-                const message = {
-                    type: "feeling",
-                    message: feeling,
-                    timestamp: new Date().toISOString()
-                };
-                
-                ws.send(JSON.stringify(message));
-                console.log("Sent feeling:", message);
-                
-                // Show aquarium info message
-                const aquariumInfo = document.getElementById('aquariumInfo');
-                aquariumInfo.style.display = 'block';
-                
-                // Hide the message after 3 seconds
-                setTimeout(() => {
-                    aquariumInfo.style.display = 'none';
-                }, 3000);
-                
-                // Visual feedback - briefly highlight the button
-                const buttonMap = {'1': 'surprise', '2': 'sad', '3': 'happy', '4': 'fearful'};
-                const button = document.getElementById(buttonMap[feeling] + 'Btn');
-                button.style.transform = 'scale(0.95)';
-                button.style.opacity = '0.7';
-                
-                setTimeout(() => {
-                    button.style.transform = '';
-                    button.style.opacity = '';
-                }, 200);
-                
-            } else {
-                console.log("WebSocket not connected");
-                alert("WebSocket not connected. Please wait for connection or try reconnecting.");
-            }
-        }
+        ws.send(JSON.stringify(message));
+        console.log("Sent feeling:", message);
+
+        // Show aquarium info message
+        const aquariumInfo = document.getElementById('aquariumInfo');
+        aquariumInfo.style.display = 'block';
+
+        // Hide the message after 3 seconds
+        setTimeout(() => {
+            aquariumInfo.style.display = 'none';
+        }, 3000);
+
+        // Visual feedback - briefly highlight the button
+        const buttonMap = {'1': 'surprise', '2': 'sad', '3': 'happy', '4': 'fearful'};
+        const button = document.getElementById(buttonMap[feeling] + 'Btn');
+        button.style.transform = 'scale(0.95)';
+        button.style.opacity = '0.7';
+
+        setTimeout(() => {
+            button.style.transform = '';
+            button.style.opacity = '';
+        }, 200);
+
+    } else {
+        console.log("WebSocket not connected");
+        alert("WebSocket not connected. Please wait for connection or try reconnecting.");
+    }
+}
+
         
         // P5.js setup (minimal, just for compatibility)
         function setup() {
